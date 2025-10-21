@@ -41,7 +41,7 @@ pipeline {
         }
         // Add your review service url to url field
         git branch: 'master', credentialsId: 'github', url: 'https://github.com/kevindeveloper95/jobapp-review'
-        sh 'npm install'
+        sh  'npm install'
       }
     }
 
