@@ -18,7 +18,7 @@ pipeline {
 
   environment {
     DOCKER_CREDENTIALS = credentials("dockerhub")
-    IMAGE_NAME = "kevin1208/jobber-review"
+    IMAGE_NAME = "kevin1208" + "/" + "jobber-review"
     IMAGE_TAG = "stable-${BUILD_NUMBER}"
   }
 
@@ -83,7 +83,7 @@ pipeline {
 
     stage("Create New Pods") {
       steps {
-        withKubeCredentials(kubectlCredentials: [[caCertificate: '', clusterName: '', contextName: '', credentialsId: '', namespace: '', serverUrl: '']]) {
+        withKubeCredentials(kubectlCredentials: [[caCertificate: '', clusterName: 'minikube', contextName: 'minikube', credentialsId: 'jenkins-k8s-token', namespace: '', serverUrl: 'https://host.docker.internal:60763']]) {
           script {
             def pods = groovyMethods.findPodsFromName("${namespace}", "${serviceName}")
             for (podName in pods) {
