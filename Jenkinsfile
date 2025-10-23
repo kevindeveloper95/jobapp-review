@@ -12,7 +12,7 @@ pipeline {
   }
 
   tools {
-    nodejs "NodeJs"
+    nodejs "NodeJS"
     dockerTool "Docker"
   }
 
@@ -20,6 +20,7 @@ pipeline {
     DOCKER_CREDENTIALS = credentials("dockerhub")
     IMAGE_NAME = "kevin1208" + "/" + "jobber-review"
     IMAGE_TAG = "stable-${BUILD_NUMBER}"
+    SLACK_WEBHOOK_URL = credentials("slack-webhook")
   }
 
   stages {
@@ -83,7 +84,7 @@ pipeline {
 
     stage("Create New Pods") {
       steps {
-        withKubeCredentials(kubectlCredentials: [[caCertificate: '', clusterName: 'minikube', contextName: 'minikube', credentialsId: 'jenkins-k8s-token', namespace: '', serverUrl: 'https://host.docker.internal:60763']]) {
+        withKubeCredentials(kubectlCredentials: [[caCertificate: '', clusterName: 'minikube', contextName: 'minikube', credentialsId: 'jenkins-k8s-token', namespace: 'production', serverUrl: 'https://host.docker.internal:60763']]) {
           script {
             def pods = groovyMethods.findPodsFromName("${namespace}", "${serviceName}")
             for (podName in pods) {
@@ -97,7 +98,6 @@ pipeline {
       }
     }
   }
-
   post {
     success {
       script {
