@@ -69,7 +69,7 @@ pipeline {
 
     stage("Lint Check") {
       steps {
-        sh 'npx eslint@8 src/**/*.ts'
+        sh 'npx eslint@8 --config .eslintrc.json src/**/*.ts'
       }
     }
 
