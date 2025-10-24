@@ -73,6 +73,7 @@ pipeline {
           npm install @typescript-eslint/eslint-plugin@latest --save-dev
           npm install eslint-plugin-import@latest --save-dev
           npm install eslint-plugin-prettier@latest --save-dev
+          npm install eslint-config-prettier@latest --save-dev
           npx eslint@8 --config .eslintrc.json src/**/*.ts
         '''
       }
