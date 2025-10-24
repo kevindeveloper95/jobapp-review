@@ -3,10 +3,10 @@ pipeline {
     label 'jenkins-agent'
   }
 
-  // tools {
-  //   nodejs "NodeJS"
-  //   dockerTool "Docker"
-  // }
+  tools {
+    nodejs "NodeJS"
+    dockerTool "Docker"
+  }
 
   environment {
     DOCKER_CREDENTIALS = credentials("dockerhub")
@@ -29,25 +29,58 @@ pipeline {
 
     stage("Install Dependencies") {
       steps {
-        sh 'npm install'
+        script {
+          // Check if npm is available, if not use Docker
+          def npmCheck = sh(script: 'which npm || echo "npm not found"', returnStdout: true).trim()
+          if (npmCheck == "npm not found") {
+            echo "Node.js not found, using Docker..."
+            sh '''
+              # Use Docker to run npm commands
+              docker run --rm -v $(pwd):/app -w /app node:18-alpine npm install
+            '''
+          } else {
+            sh 'npm install'
+          }
+        }
       }
     }
 
     stage("Lint Check") {
       steps {
-        sh 'npm run lint:check'
+        script {
+          def npmCheck = sh(script: 'which npm || echo "npm not found"', returnStdout: true).trim()
+          if (npmCheck == "npm not found") {
+            sh 'docker run --rm -v $(pwd):/app -w /app node:18-alpine npm run lint:check'
+          } else {
+            sh 'npm run lint:check'
+          }
+        }
       }
     }
 
     stage("Code Format Check") {
       steps {
-        sh 'npm run prettier:check'
+        script {
+          def npmCheck = sh(script: 'which npm || echo "npm not found"', returnStdout: true).trim()
+          if (npmCheck == "npm not found") {
+            sh 'docker run --rm -v $(pwd):/app -w /app node:18-alpine npm run prettier:check'
+          } else {
+            sh 'npm run prettier:check'
+          }
+        }
       }
     }
 
     stage("Unit Test") {
       steps {
-        sh 'npm run test'
+        script {
+          def npmCheck = sh(script: 'which npm || echo "npm not found"', returnStdout: true).trim()
+          if (npmCheck == "npm not found") {
+            sh 'docker run --rm -v $(pwd):/app -w /app node:18-alpine npm run test'
+          } else {
+            sh 'npm run test'
+          }
+        }
       }
     }
 
@@ -85,4 +118,4 @@ pipeline {
       echo "   - Check if the repository is accessible"
     }
   }
-}
+ }
