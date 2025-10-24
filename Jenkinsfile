@@ -1,20 +1,12 @@
-namespace = "production"
-serviceName = "jobber-review"
-service = "Jobber Reviews"
-
-def groovyMethods
-
-m1 = System.currentTimeMillis()
-
 pipeline {
   agent {
     label 'jenkins-agent'
   }
 
-   tools {
-    nodejs "NodeJS"
-     dockerTool "Docker"
-   }
+  // tools {
+  //   nodejs "NodeJS"
+  //   dockerTool "Docker"
+  // }
 
   environment {
     DOCKER_CREDENTIALS = credentials("dockerhub")
@@ -29,18 +21,14 @@ pipeline {
       }
     }
 
-    stage("Prepare Environment") {
+    stage("Checkout") {
       steps {
-        sh "[ -d pipeline ] || mkdir pipeline"
-        dir("pipeline") {
-          // Download jenkins-automation repository
-          git branch: 'master', credentialsId: 'github', url: 'https://github.com/kevindeveloper95/jenkins-automation.git'
-          script {
-            groovyMethods = load("functions.groovy")
-          }
-        }
-        // Download review service repository
         git branch: 'master', credentialsId: 'github', url: 'https://github.com/kevindeveloper95/jobapp-review'
+      }
+    }
+
+    stage("Install Dependencies") {
+      steps {
         sh 'npm install'
       }
     }
@@ -80,82 +68,21 @@ pipeline {
         sh "docker rmi $IMAGE_NAME:stable"
       }
     }
-
-    stage("Create New Pods") {
-      steps {
-        withKubeCredentials(kubectlCredentials: [[caCertificate: '', clusterName: 'minikube', contextName: 'minikube', credentialsId: 'jenkins-k8s-token', namespace: 'production', serverUrl: 'https://host.docker.internal:60763']]) {
-          script {
-            def pods = groovyMethods.findPodsFromName("${namespace}", "${serviceName}")
-            for (podName in pods) {
-              sh """
-                kubectl delete -n ${namespace} pod ${podName}
-                sleep 10s
-              """
-            }
-          }
-        }
-      }
-    }
   }
 
   post {
     success {
-      script {
-        m2 = System.currentTimeMillis()
-        def durTime = groovyMethods.durationTime(m1, m2)
-        def author = groovyMethods.readCommitAuthor()
-        groovyMethods.notifySlack("", "jobber-jenkins", [
-        				[
-        					title: "BUILD SUCCEEDED: ${service} Service with build number ${env.BUILD_NUMBER}",
-        					title_link: "${env.BUILD_URL}",
-        					color: "good",
-        					text: "Created by: ${author}",
-        					"mrkdwn_in": ["fields"],
-        					fields: [
-        						[
-        							title: "Duration Time",
-        							value: "${durTime}",
-        							short: true
-        						],
-        						[
-        							title: "Stage Name",
-        							value: "Production",
-        							short: true
-        						],
-        					]
-        				]
-        		]
-        )
-      }
+      echo "✅ Build succeeded! Build #${env.BUILD_NUMBER}"
+      echo "🎉 Jobber Review service deployed successfully!"
+      echo "📦 Docker image: ${env.IMAGE_NAME}:${env.IMAGE_TAG}"
     }
     failure {
-      script {
-        m2 = System.currentTimeMillis()
-        def durTime = groovyMethods.durationTime(m1, m2)
-        def author = groovyMethods.readCommitAuthor()
-        groovyMethods.notifySlack("", "jobber-jenkins", [
-        				[
-        					title: "BUILD FAILED: ${service} Service with build number ${env.BUILD_NUMBER}",
-        					title_link: "${env.BUILD_URL}",
-        					color: "error",
-        					text: "Created by: ${author}",
-        					"mrkdwn_in": ["fields"],
-        					fields: [
-        						[
-        							title: "Duration Time",
-        							value: "${durTime}",
-        							short: true
-        						],
-        						[
-        							title: "Stage Name",
-        							value: "Production",
-        							short: true
-        						],
-        					]
-        				]
-        		]
-        )
-      }
+      echo "❌ Build failed! Build #${env.BUILD_NUMBER}"
+      echo "🔧 Check the logs for more details"
+      echo "📋 Common issues:"
+      echo "   - Check if all dependencies are installed"
+      echo "   - Verify Docker credentials"
+      echo "   - Check if the repository is accessible"
     }
   }
 }
