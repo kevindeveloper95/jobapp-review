@@ -1,16 +1,24 @@
+namespace = "production"
+serviceName = "jobber-review"
+service = "Jobber Reviews"
+
+def groovyMethods
+
+m1 = System.currentTimeMillis()
+
 pipeline {
   agent {
-    label 'jenkins-agent'
+    label 'Jenkins-Agent'
   }
 
- /*  tools {
+  tools {
     nodejs "NodeJS"
     dockerTool "Docker"
-  } */
+  }
 
   environment {
     DOCKER_CREDENTIALS = credentials("dockerhub")
-    IMAGE_NAME = "kevin1208/jobber-review"
+    IMAGE_NAME = "kevin1208" + "/" + "jobber-review"
     IMAGE_TAG = "stable-${BUILD_NUMBER}"
   }
 
@@ -21,74 +29,43 @@ pipeline {
       }
     }
 
-    stage("Checkout") {
+    stage("Prepare Environment") {
       steps {
-        git branch: 'master', credentialsId: 'github', url: 'https://github.com/kevindeveloper95/jobapp-review'
-      }
-    }
-
-    stage("Install Dependencies") {
-      steps {
-        script {
-          // Try npm first, fallback to Docker if it fails
-          try {
-            sh 'npm install'
-          } catch (Exception e) {
-            echo "npm failed, using Docker fallback..."
-            sh '''
-              # Use Docker to run npm commands with sudo
-              sudo docker run --rm -v $(pwd):/app -w /app node:18-alpine npm install
-            '''
+        sh "[ -d pipeline ] || mkdir pipeline"
+        dir("pipeline") {
+          // Add your jenkins automation url to url field
+          git branch: 'main', credentialsId: 'github', url: 'https://github.com/kevindeveloper95/jenkins-automation.git'
+          script {
+            groovyMethods = load("functions.groovy")
           }
         }
+        // Add your chat review url to url field
+        git branch: 'main', credentialsId: 'github', url: 'https://github.com/kevindeveloper95/jobapp-review'
+        sh 'npm install'
       }
     }
 
     stage("Lint Check") {
       steps {
-        script {
-          // Try npm first, fallback to Docker if it fails
-          try {
-            sh 'npm run lint:check'
-          } catch (Exception e) {
-            echo "npm failed, using Docker fallback..."
-            sh 'sudo docker run --rm -v $(pwd):/app -w /app node:18-alpine npm run lint:check'
-          }
-        }
+        sh 'npm run lint:check'
       }
     }
 
     stage("Code Format Check") {
       steps {
-        script {
-          // Try npm first, fallback to Docker if it fails
-          try {
-            sh 'npm run prettier:check'
-          } catch (Exception e) {
-            echo "npm failed, using Docker fallback..."
-            sh 'sudo docker run --rm -v $(pwd):/app -w /app node:18-alpine npm run prettier:check'
-          }
-        }
+        sh 'npm run prettier:check'
       }
     }
 
     stage("Unit Test") {
       steps {
-        script {
-          // Try npm first, fallback to Docker if it fails
-          try {
-            sh 'npm run test'
-          } catch (Exception e) {
-            echo "npm failed, using Docker fallback..."
-            sh 'sudo docker run --rm -v $(pwd):/app -w /app node:18-alpine npm run test'
-          }
-        }
+        sh 'npm run test'
       }
     }
 
     stage("Build and Push") {
       steps {
-        sh 'docker login -u $DOCKER_CREDENTIALS_USR --password $DOCKER_CREDENTIALS_PSW'
+        sh 'docker login -u $DOCKERHUB_CREDENTIAL_USR --password $DOCKERHUB_CREDENTIALS_PSW'
         sh "docker build -t $IMAGE_NAME ."
         sh "docker tag $IMAGE_NAME $IMAGE_NAME:$IMAGE_TAG"
         sh "docker tag $IMAGE_NAME $IMAGE_NAME:stable"
@@ -103,21 +80,81 @@ pipeline {
         sh "docker rmi $IMAGE_NAME:stable"
       }
     }
-  }
 
+    stage("Create New Pods") {
+      steps {
+        withKubeCredentials(kubectlCredentials: [[caCertificate: '', clusterName: 'minikube', contextName: 'minikube', credentialsId: 'jenkins-k8s-token', namespace: '', serverUrl: 'https://host.docker.internal:60763']]) {
+          script {
+            def pods = groovyMethods.findPodsFromName("${namespace}", "${serviceName}")
+            for (podName in pods) {
+              sh """
+                kubectl delete -n ${namespace} pod ${podName}
+                sleep 10s
+              """
+            }
+          }
+        }
+      }
+    }
+  }
   post {
     success {
-      echo "✅ Build succeeded! Build #${env.BUILD_NUMBER}"
-      echo "🎉 Jobber Review service deployed successfully!"
-      echo "📦 Docker image: ${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+      script {
+        m2 = System.currentTimeMillis()
+        def durTime = groovyMethods.durationTime(m1, m2)
+        def author = groovyMethods.readCommitAuthor()
+        groovyMethods.notifySlack("", "jobber-jenkins", [
+        				[
+        					title: "BUILD SUCCEEDED: ${service} Service with build number ${env.BUILD_NUMBER}",
+        					title_link: "${env.BUILD_URL}",
+        					color: "good",
+        					text: "Created by: ${author}",
+        					"mrkdwn_in": ["fields"],
+        					fields: [
+        						[
+        							title: "Duration Time",
+        							value: "${durTime}",
+        							short: true
+        						],
+        						[
+        							title: "Stage Name",
+        							value: "Production",
+        							short: true
+        						],
+        					]
+        				]
+        		]
+        )
+      }
     }
     failure {
-      echo "❌ Build failed! Build #${env.BUILD_NUMBER}"
-      echo "🔧 Check the logs for more details"
-      echo "📋 Common issues:"
-      echo "   - Check if all dependencies are installed"
-      echo "   - Verify Docker credentials"
-      echo "   - Check if the repository is accessible"
+      script {
+        m2 = System.currentTimeMillis()
+        def durTime = groovyMethods.durationTime(m1, m2)
+        def author = groovyMethods.readCommitAuthor()
+        groovyMethods.notifySlack("", "jobber-jenkins", [
+        				[
+        					title: "BUILD FAILED: ${service} Service with build number ${env.BUILD_NUMBER}",
+        					title_link: "${env.BUILD_URL}",
+        					color: "error",
+        					text: "Created by: ${author}",
+        					"mrkdwn_in": ["fields"],
+        					fields: [
+        						[
+        							title: "Duration Time",
+        							value: "${durTime}",
+        							short: true
+        						],
+        						[
+        							title: "Stage Name",
+        							value: "Production",
+        							short: true
+        						],
+        					]
+        				]
+        		]
+        )
+      }
     }
   }
- }
+}
