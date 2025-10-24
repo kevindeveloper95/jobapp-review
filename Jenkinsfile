@@ -11,16 +11,15 @@ pipeline {
     label 'jenkins-agent'
   }
 
-  tools {
-    nodejs "NodeJs"
-    dockerTool "Docker"
-  }
+   tools {
+    nodejs "NodeJS"
+     dockerTool "Docker"
+   }
 
   environment {
     DOCKER_CREDENTIALS = credentials("dockerhub")
-    IMAGE_NAME = "kevin1208" + "/" + "jobber-review"
+    IMAGE_NAME = "kevin1208/jobber-review"
     IMAGE_TAG = "stable-${BUILD_NUMBER}"
-    SLACK_WEBHOOK_URL = credentials("slack-webhook")
   }
 
   stages {
@@ -34,13 +33,13 @@ pipeline {
       steps {
         sh "[ -d pipeline ] || mkdir pipeline"
         dir("pipeline") {
-          // Add your jenkins automation url to url field
+          // Download jenkins-automation repository
           git branch: 'master', credentialsId: 'github', url: 'https://github.com/kevindeveloper95/jenkins-automation.git'
           script {
             groovyMethods = load("functions.groovy")
           }
         }
-        // Add your review service url to url field
+        // Download review service repository
         git branch: 'master', credentialsId: 'github', url: 'https://github.com/kevindeveloper95/jobapp-review'
         sh 'npm install'
       }
@@ -98,6 +97,7 @@ pipeline {
       }
     }
   }
+
   post {
     success {
       script {
