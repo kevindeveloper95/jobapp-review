@@ -69,7 +69,10 @@ pipeline {
 
     stage("Lint Check") {
       steps {
-        sh 'npx eslint@8 --config .eslintrc.json src/**/*.ts'
+        sh '''
+          npm install @typescript-eslint/eslint-plugin@latest --save-dev
+          npx eslint@8 --config .eslintrc.json src/**/*.ts
+        '''
       }
     }
 
