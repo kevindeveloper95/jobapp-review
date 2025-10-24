@@ -18,6 +18,7 @@ pipeline {
 
   environment {
     DOCKER_CREDENTIALS = credentials("dockerhub")
+    NPM_TOKEN = credentials("github-npm-token")
     IMAGE_NAME = "kevin1208" + "/" + "jobber-review"
     IMAGE_TAG = "stable-${BUILD_NUMBER}"
   }
@@ -41,7 +42,28 @@ pipeline {
         }
         // Add your chat review url to url field
         git branch: 'master', credentialsId: 'github', url: 'https://github.com/kevindeveloper95/jobapp-review'
-        sh 'npm install'
+        script {
+          // Configure npm for private packages
+          sh '''
+            echo "//npm.pkg.github.com/:_authToken=$NPM_TOKEN" > .npmrc
+            echo "@kevindeveloper95:registry=https://npm.pkg.github.com" >> .npmrc
+          '''
+          // Try npm first, fallback to Docker if it fails
+          try {
+            sh 'npm install'
+          } catch (Exception e) {
+            echo "npm failed, using Docker fallback..."
+            sh '''
+              docker run --rm -v $(pwd):/app -w /app \
+              -e NPM_TOKEN=$NPM_TOKEN \
+              node:18-alpine sh -c "
+                echo '//npm.pkg.github.com/:_authToken='$NPM_TOKEN > .npmrc &&
+                echo '@kevindeveloper95:registry=https://npm.pkg.github.com' >> .npmrc &&
+                npm install
+              "
+            '''
+          }
+        }
       }
     }
 
