@@ -36,8 +36,8 @@ pipeline {
           } catch (Exception e) {
             echo "npm failed, using Docker fallback..."
             sh '''
-              # Use Docker to run npm commands
-              docker run --rm -v $(pwd):/app -w /app node:18-alpine npm install
+              # Use Docker to run npm commands with sudo
+              sudo docker run --rm -v $(pwd):/app -w /app node:18-alpine npm install
             '''
           }
         }
@@ -52,7 +52,7 @@ pipeline {
             sh 'npm run lint:check'
           } catch (Exception e) {
             echo "npm failed, using Docker fallback..."
-            sh 'docker run --rm -v $(pwd):/app -w /app node:18-alpine npm run lint:check'
+            sh 'sudo docker run --rm -v $(pwd):/app -w /app node:18-alpine npm run lint:check'
           }
         }
       }
@@ -66,7 +66,7 @@ pipeline {
             sh 'npm run prettier:check'
           } catch (Exception e) {
             echo "npm failed, using Docker fallback..."
-            sh 'docker run --rm -v $(pwd):/app -w /app node:18-alpine npm run prettier:check'
+            sh 'sudo docker run --rm -v $(pwd):/app -w /app node:18-alpine npm run prettier:check'
           }
         }
       }
@@ -80,7 +80,7 @@ pipeline {
             sh 'npm run test'
           } catch (Exception e) {
             echo "npm failed, using Docker fallback..."
-            sh 'docker run --rm -v $(pwd):/app -w /app node:18-alpine npm run test'
+            sh 'sudo docker run --rm -v $(pwd):/app -w /app node:18-alpine npm run test'
           }
         }
       }
