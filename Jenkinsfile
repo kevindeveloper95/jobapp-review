@@ -69,19 +69,19 @@ pipeline {
 
     stage("Lint Check") {
       steps {
-        sh 'npm run lint:check'
+        sh 'npx eslint src/**/*.ts'
       }
     }
 
     stage("Code Format Check") {
       steps {
-        sh 'npm run prettier:check'
+        sh 'npx prettier --check src/**/*.ts'
       }
     }
 
     stage("Unit Test") {
       steps {
-        sh 'npm run test'
+        sh 'npx jest'
       }
     }
 
