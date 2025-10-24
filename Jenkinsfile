@@ -3,10 +3,10 @@ pipeline {
     label 'jenkins-agent'
   }
 
-  tools {
+ /*  tools {
     nodejs "NodeJS"
     dockerTool "Docker"
-  }
+  } */
 
   environment {
     DOCKER_CREDENTIALS = credentials("dockerhub")
