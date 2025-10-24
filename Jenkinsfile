@@ -30,16 +30,15 @@ pipeline {
     stage("Install Dependencies") {
       steps {
         script {
-          // Check if npm is available, if not use Docker
-          def npmCheck = sh(script: 'which npm || echo "npm not found"', returnStdout: true).trim()
-          if (npmCheck == "npm not found") {
-            echo "Node.js not found, using Docker..."
+          // Try npm first, fallback to Docker if it fails
+          try {
+            sh 'npm install'
+          } catch (Exception e) {
+            echo "npm failed, using Docker fallback..."
             sh '''
               # Use Docker to run npm commands
               docker run --rm -v $(pwd):/app -w /app node:18-alpine npm install
             '''
-          } else {
-            sh 'npm install'
           }
         }
       }
@@ -48,11 +47,12 @@ pipeline {
     stage("Lint Check") {
       steps {
         script {
-          def npmCheck = sh(script: 'which npm || echo "npm not found"', returnStdout: true).trim()
-          if (npmCheck == "npm not found") {
-            sh 'docker run --rm -v $(pwd):/app -w /app node:18-alpine npm run lint:check'
-          } else {
+          // Try npm first, fallback to Docker if it fails
+          try {
             sh 'npm run lint:check'
+          } catch (Exception e) {
+            echo "npm failed, using Docker fallback..."
+            sh 'docker run --rm -v $(pwd):/app -w /app node:18-alpine npm run lint:check'
           }
         }
       }
@@ -61,11 +61,12 @@ pipeline {
     stage("Code Format Check") {
       steps {
         script {
-          def npmCheck = sh(script: 'which npm || echo "npm not found"', returnStdout: true).trim()
-          if (npmCheck == "npm not found") {
-            sh 'docker run --rm -v $(pwd):/app -w /app node:18-alpine npm run prettier:check'
-          } else {
+          // Try npm first, fallback to Docker if it fails
+          try {
             sh 'npm run prettier:check'
+          } catch (Exception e) {
+            echo "npm failed, using Docker fallback..."
+            sh 'docker run --rm -v $(pwd):/app -w /app node:18-alpine npm run prettier:check'
           }
         }
       }
@@ -74,11 +75,12 @@ pipeline {
     stage("Unit Test") {
       steps {
         script {
-          def npmCheck = sh(script: 'which npm || echo "npm not found"', returnStdout: true).trim()
-          if (npmCheck == "npm not found") {
-            sh 'docker run --rm -v $(pwd):/app -w /app node:18-alpine npm run test'
-          } else {
+          // Try npm first, fallback to Docker if it fails
+          try {
             sh 'npm run test'
+          } catch (Exception e) {
+            echo "npm failed, using Docker fallback..."
+            sh 'docker run --rm -v $(pwd):/app -w /app node:18-alpine npm run test'
           }
         }
       }
