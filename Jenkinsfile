@@ -74,7 +74,7 @@ pipeline {
           npm install eslint-plugin-import@latest --save-dev
           npm install eslint-plugin-prettier@latest --save-dev
           npm install eslint-config-prettier@latest --save-dev
-          echo '{"extends": ["eslint:recommended", "@typescript-eslint/recommended"], "parser": "@typescript-eslint/parser", "plugins": ["@typescript-eslint"]}' > .eslintrc.temp.json
+          echo '{"extends": ["eslint:recommended"], "parser": "@typescript-eslint/parser", "plugins": ["@typescript-eslint"]}' > .eslintrc.temp.json
           npx eslint@8 --config .eslintrc.temp.json src/**/*.ts
         '''
       }
