@@ -8,7 +8,7 @@ m1 = System.currentTimeMillis()
 
 pipeline {
   agent {
-    label 'Jenkins-Agent'
+    label 'jenkins-agent'
   }
 
   tools {
