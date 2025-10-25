@@ -90,19 +90,19 @@ pipeline {
 
     stage("Build and Push") {
       steps {
-        sh 'docker login -u $DOCKER_CREDENTIALS_USR --password $DOCKER_CREDENTIALS_PSW'
-        sh "docker build -t $IMAGE_NAME ."
-        sh "docker tag $IMAGE_NAME $IMAGE_NAME:$IMAGE_TAG"
-        sh "docker tag $IMAGE_NAME $IMAGE_NAME:stable"
-        sh "docker push $IMAGE_NAME:$IMAGE_TAG"
-        sh "docker push $IMAGE_NAME:stable"
+        sh 'sudo docker login -u $DOCKER_CREDENTIALS_USR --password $DOCKER_CREDENTIALS_PSW'
+        sh "sudo docker build -t $IMAGE_NAME ."
+        sh "sudo docker tag $IMAGE_NAME $IMAGE_NAME:$IMAGE_TAG"
+        sh "sudo docker tag $IMAGE_NAME $IMAGE_NAME:stable"
+        sh "sudo docker push $IMAGE_NAME:$IMAGE_TAG"
+        sh "sudo docker push $IMAGE_NAME:stable"
       }
     }
 
     stage("Clean Artifacts") {
       steps {
-        sh "docker rmi $IMAGE_NAME:$IMAGE_TAG"
-        sh "docker rmi $IMAGE_NAME:stable"
+        sh "sudo docker rmi $IMAGE_NAME:$IMAGE_TAG"
+        sh "sudo docker rmi $IMAGE_NAME:stable"
       }
     }
 
