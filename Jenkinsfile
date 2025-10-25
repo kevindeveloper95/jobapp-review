@@ -71,7 +71,7 @@ pipeline {
       steps {
         sh '''
           mv .eslintrc.json .eslintrc.json.backup
-          echo '{"extends": ["eslint:recommended"]}' > .eslintrc.json
+          echo '{"extends": ["eslint:recommended"], "parser": "@typescript-eslint/parser", "parserOptions": {"ecmaVersion": 2020, "sourceType": "module"}}' > .eslintrc.json
           npx eslint@8 src/**/*.ts
           mv .eslintrc.json.backup .eslintrc.json
         '''
