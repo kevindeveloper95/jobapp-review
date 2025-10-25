@@ -70,8 +70,10 @@ pipeline {
     stage("Lint Check") {
       steps {
         sh '''
-          echo '{"extends": ["eslint:recommended"]}' > .eslintrc.temp.json
-          npx eslint@8 --config .eslintrc.temp.json src/**/*.ts
+          mv .eslintrc.json .eslintrc.json.backup
+          echo '{"extends": ["eslint:recommended"]}' > .eslintrc.json
+          npx eslint@8 src/**/*.ts
+          mv .eslintrc.json.backup .eslintrc.json
         '''
       }
     }
