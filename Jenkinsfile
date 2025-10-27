@@ -69,28 +69,25 @@ pipeline {
 
     stage("Lint Check") {
       steps {
-        echo "Skipping lint check - ESLint configuration issues"
-        echo "Lint check will be addressed in future updates"
+        sh 'npm run lint:check'
       }
     }
 
     stage("Code Format Check") {
       steps {
-        echo "Skipping format check - Prettier formatting issues"
-        echo "Format check will be addressed in future updates"
+        sh 'npm run prettier:check'
       }
     }
 
     stage("Unit Test") {
       steps {
-        echo "Skipping unit tests - Jest configuration issues"
-        echo "Unit tests will be addressed in future updates"
+        sh 'npm run test'
       }
     }
 
     stage("Build and Push") {
       steps {
-        sh 'docker login -u $DOCKER_CREDENTIALS_USR --password $DOCKER_CREDENTIALS_PSW'
+        sh 'docker login -u $DOCKERHUB_CREDENTIAL_USR --password $DOCKERHUB_CREDENTIALS_PSW'
         sh "docker build -t $IMAGE_NAME ."
         sh "docker tag $IMAGE_NAME $IMAGE_NAME:$IMAGE_TAG"
         sh "docker tag $IMAGE_NAME $IMAGE_NAME:stable"
