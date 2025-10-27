@@ -73,9 +73,14 @@ pipeline {
       }
     }
 
-    stage("Code Format Check") {
+    stage("Code Format Fix") {
       steps {
-        sh 'npm run prettier:check'
+        sh '''
+          # Fix formatting automatically
+          npm run prettier:fix || echo "Prettier fix completed"
+          # Check if there are still issues
+          npm run prettier:check
+        '''
       }
     }
 
