@@ -70,8 +70,7 @@ pipeline {
     stage("Lint Check") {
       steps {
         sh '''
-          # Change to the review-service directory
-          cd services/review-service
+          # Current directory already has the review-service code
           docker run --rm -v $(pwd):/app -w /app \
           node:18-alpine sh -c "
             npm install &&
@@ -84,8 +83,6 @@ pipeline {
     stage("Code Format Check") {
       steps {
         sh '''
-          # Change to the review-service directory
-          cd services/review-service
           docker run --rm -v $(pwd):/app -w /app \
           node:18-alpine sh -c "
             npm install &&
@@ -98,8 +95,6 @@ pipeline {
     stage("Unit Test") {
       steps {
         sh '''
-          # Change to the review-service directory
-          cd services/review-service
           docker run --rm -v $(pwd):/app -w /app \
           node:18-alpine sh -c "
             npm install &&
@@ -114,7 +109,7 @@ pipeline {
         script {
           withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
             sh "docker login -u ${DOCKER_USER} --password ${DOCKER_PASS}"
-            sh "cd services/review-service && docker build -t $IMAGE_NAME ."
+            sh "docker build -t $IMAGE_NAME ."
             sh "docker tag $IMAGE_NAME $IMAGE_NAME:$IMAGE_TAG"
             sh "docker tag $IMAGE_NAME $IMAGE_NAME:stable"
             sh "docker push $IMAGE_NAME:$IMAGE_TAG"
