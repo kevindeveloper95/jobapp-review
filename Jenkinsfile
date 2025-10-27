@@ -30,6 +30,20 @@ pipeline {
       }
     }
 
+    stage("Setup Docker") {
+      steps {
+        sh '''
+          # Fix Docker socket permissions if needed
+          if [ -w /var/run/docker.sock ]; then
+            echo "Docker socket is writable"
+          else
+            echo "Adjusting Docker socket permissions..."
+            sudo chmod 666 /var/run/docker.sock || echo "Permission adjustment skipped"
+          fi
+        '''
+      }
+    }
+
     stage("Prepare Environment") {
       steps {
         sh "[ -d pipeline ] || mkdir pipeline"
