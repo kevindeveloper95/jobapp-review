@@ -13,6 +13,7 @@ pipeline {
 
   tools {
     nodejs "NodeJS"
+    dockerTool "Docker"
   }
 
   environment {
