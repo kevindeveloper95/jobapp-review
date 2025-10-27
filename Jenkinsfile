@@ -73,7 +73,7 @@ pipeline {
       docker run --rm -v $(pwd):/app -w /app \
       node:18-alpine sh -c "
         npm install &&
-        npx eslint src/ --ext .ts,.js --config .eslintrc.json --max-warnings 0
+        npm run lint:check
       "
     '''
   }
@@ -85,7 +85,7 @@ stage("Code Format Check") {
       docker run --rm -v $(pwd):/app -w /app \
       node:18-alpine sh -c "
         npm install &&
-        npx prettier --check src/ --config .prettierrc
+        npm run prettier:check
       "
     '''
   }
@@ -97,7 +97,7 @@ stage("Unit Test") {
       docker run --rm -v $(pwd):/app -w /app \
       node:18-alpine sh -c "
         npm install &&
-        npm run test -- --coverage --watchAll=false
+        npm run test
       "
     '''
   }
