@@ -67,40 +67,21 @@ pipeline {
       }
     }
 
-    stage("Lint Check") {
+     stage("Lint Check") {
       steps {
-        sh '''
-          # Current directory already has the review-service code
-          docker run --rm -v $(pwd):/app -w /app \
-          node:18-alpine sh -c "
-            npm install &&
-            npm run lint:check
-          "
-        '''
+        sh 'npm run lint:check'
       }
     }
 
     stage("Code Format Check") {
       steps {
-        sh '''
-          docker run --rm -v $(pwd):/app -w /app \
-          node:18-alpine sh -c "
-            npm install &&
-            npm run prettier:check
-          "
-        '''
+        sh 'npm run prettier:check'
       }
     }
 
     stage("Unit Test") {
       steps {
-        sh '''
-          docker run --rm -v $(pwd):/app -w /app \
-          node:18-alpine sh -c "
-            npm install &&
-            npm run test
-          "
-        '''
+        sh 'npm run test'
       }
     }
 
