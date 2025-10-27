@@ -69,22 +69,37 @@ pipeline {
 
     stage("Lint Check") {
   steps {
-    echo "Skipping lint check - ESLint not installed"
-    echo "Lint check will be addressed in future updates"
+    sh '''
+      docker run --rm -v $(pwd):/app -w /app \
+      node:18-alpine sh -c "
+        npm install &&
+        npx eslint src/ --ext .ts,.js --config .eslintrc.json --max-warnings 0
+      "
+    '''
   }
 }
 
 stage("Code Format Check") {
   steps {
-    echo "Skipping format check - Prettier not installed"
-    echo "Format check will be addressed in future updates"
+    sh '''
+      docker run --rm -v $(pwd):/app -w /app \
+      node:18-alpine sh -c "
+        npm install &&
+        npx prettier --check src/ --config .prettierrc
+      "
+    '''
   }
 }
 
 stage("Unit Test") {
   steps {
-    echo "Skipping unit tests - Jest not installed"
-    echo "Unit tests will be addressed in future updates"
+    sh '''
+      docker run --rm -v $(pwd):/app -w /app \
+      node:18-alpine sh -c "
+        npm install &&
+        npm run test -- --coverage --watchAll=false
+      "
+    '''
   }
 }
 
