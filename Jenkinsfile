@@ -90,16 +90,12 @@ pipeline {
 
     stage("Build and Push") {
       steps {
-        script {
-          withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-            sh "docker login -u ${DOCKER_USER} --password ${DOCKER_PASS}"
-            sh "docker build -t $IMAGE_NAME ."
-            sh "docker tag $IMAGE_NAME $IMAGE_NAME:$IMAGE_TAG"
-            sh "docker tag $IMAGE_NAME $IMAGE_NAME:stable"
-            sh "docker push $IMAGE_NAME:$IMAGE_TAG"
-            sh "docker push $IMAGE_NAME:stable"
-          }
-        }
+        sh 'docker login -u $DOCKER_CREDENTIALS_USR --password $DOCKER_CREDENTIALS_PSW'
+        sh "docker build -t $IMAGE_NAME ."
+        sh "docker tag $IMAGE_NAME $IMAGE_NAME:$IMAGE_TAG"
+        sh "docker tag $IMAGE_NAME $IMAGE_NAME:stable"
+        sh "docker push $IMAGE_NAME:$IMAGE_TAG"
+        sh "docker push $IMAGE_NAME:stable"
       }
     }
 
