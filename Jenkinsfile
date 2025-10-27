@@ -32,19 +32,6 @@ pipeline {
 
     stage("Prepare Environment") {
       steps {
-        sh '''
-          # Create docker wrapper script
-          cat > docker-wrapper.sh << 'EOF'
-          #!/bin/sh
-          # Try to fix Docker socket permissions
-          chmod 666 /var/run/docker.sock 2>/dev/null || true
-          # Execute docker command
-          exec /usr/bin/docker "$@"
-          EOF
-          chmod +x docker-wrapper.sh
-          # Add wrapper to PATH
-          export PATH=$(pwd):$PATH
-        '''
         sh "[ -d pipeline ] || mkdir pipeline"
         dir("pipeline") {
           // Add your jenkins automation url to url field
@@ -67,7 +54,7 @@ pipeline {
           } catch (Exception e) {
             echo "npm failed, using Docker fallback..."
             sh '''
-              ./docker-wrapper.sh run --rm -v $(pwd):/app -w /app \
+              docker run --rm -v $(pwd):/app -w /app \
               -e NPM_TOKEN=$NPM_TOKEN \
               node:18-alpine sh -c "
                 echo '//npm.pkg.github.com/:_authToken='$NPM_TOKEN > .npmrc &&
@@ -83,41 +70,38 @@ pipeline {
     stage("Lint Check") {
       steps {
         sh '''
-          docker run --rm \
-            -v $(pwd):/app \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            -w /app \
-            node:18-alpine sh -c "
-              npm install &&
-              npm run lint:check
-            "
+          docker run --rm -v $(pwd):/app -w /app \
+          node:18-alpine sh -c "
+            npm install &&
+            npm run lint:check
+          "
         '''
       }
     }
 
-stage("Code Format Check") {
-  steps {
-    sh '''
-      docker run --rm -v $(pwd):/app -w /app \
-      node:18-alpine sh -c "
-        npm install &&
-        npm run prettier:check
-      "
-    '''
-  }
-}
+    stage("Code Format Check") {
+      steps {
+        sh '''
+          docker run --rm -v $(pwd):/app -w /app \
+          node:18-alpine sh -c "
+            npm install &&
+            npm run prettier:check
+          "
+        '''
+      }
+    }
 
-stage("Unit Test") {
-  steps {
-    sh '''
-      docker run --rm -v $(pwd):/app -w /app \
-      node:18-alpine sh -c "
-        npm install &&
-        npm run test
-      "
-    '''
-  }
-}
+    stage("Unit Test") {
+      steps {
+        sh '''
+          docker run --rm -v $(pwd):/app -w /app \
+          node:18-alpine sh -c "
+            npm install &&
+            npm run test
+          "
+        '''
+      }
+    }
 
     stage("Build and Push") {
       steps {
