@@ -71,7 +71,7 @@ pipeline {
       steps {
         sh '''
           docker run --rm -v $(pwd):/app -w /app \
-          node:25-alpine sh -c "
+          node:18-alpine sh -c "
             npm install &&
             npm run lint:check
           "
@@ -83,7 +83,7 @@ pipeline {
       steps {
         sh '''
           docker run --rm -v $(pwd):/app -w /app \
-          node:25-alpine sh -c "
+          node:18-alpine sh -c "
             npm install &&
             npm run prettier:check
           "
@@ -95,7 +95,7 @@ pipeline {
       steps {
         sh '''
           docker run --rm -v $(pwd):/app -w /app \
-          node:25-alpine sh -c "
+          node:18-alpine sh -c "
             npm install &&
             npm run test
           "
