@@ -13,7 +13,6 @@ pipeline {
 
   tools {
     nodejs "NodeJS"
-    dockerTool "Docker"
   }
 
   environment {
@@ -69,30 +68,52 @@ pipeline {
 
     stage("Lint Check") {
       steps {
-        sh 'npm run lint:check'
+        sh '''
+          docker run --rm -v $(pwd):/app -w /app \
+          node:25-alpine sh -c "
+            npm install &&
+            npm run lint:check
+          "
+        '''
       }
     }
 
     stage("Code Format Check") {
       steps {
-        sh 'npm run prettier:check'
+        sh '''
+          docker run --rm -v $(pwd):/app -w /app \
+          node:25-alpine sh -c "
+            npm install &&
+            npm run prettier:check
+          "
+        '''
       }
     }
 
     stage("Unit Test") {
       steps {
-        sh 'npm run test'
+        sh '''
+          docker run --rm -v $(pwd):/app -w /app \
+          node:25-alpine sh -c "
+            npm install &&
+            npm run test
+          "
+        '''
       }
     }
 
     stage("Build and Push") {
       steps {
-        sh 'docker login -u $DOCKERHUB_CREDENTIAL_USR --password $DOCKERHUB_CREDENTIALS_PSW'
-        sh "docker build -t $IMAGE_NAME ."
-        sh "docker tag $IMAGE_NAME $IMAGE_NAME:$IMAGE_TAG"
-        sh "docker tag $IMAGE_NAME $IMAGE_NAME:stable"
-        sh "docker push $IMAGE_NAME:$IMAGE_TAG"
-        sh "docker push $IMAGE_NAME:stable"
+        script {
+          withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+            sh "docker login -u ${DOCKER_USER} --password ${DOCKER_PASS}"
+            sh "docker build -t $IMAGE_NAME ."
+            sh "docker tag $IMAGE_NAME $IMAGE_NAME:$IMAGE_TAG"
+            sh "docker tag $IMAGE_NAME $IMAGE_NAME:stable"
+            sh "docker push $IMAGE_NAME:$IMAGE_TAG"
+            sh "docker push $IMAGE_NAME:stable"
+          }
+        }
       }
     }
 
@@ -152,9 +173,10 @@ pipeline {
     failure {
       script {
         def m2 = System.currentTimeMillis()
-        def durTime = groovyMethods.durationTime(m1, m2)
-        def author = groovyMethods.readCommitAuthor()
-        groovyMethods.notifySlack("", "jobber-jenkins", [
+        def durTime = groovyMethods?.durationTime(m1, m2) ?: "Unknown"
+        def author = groovyMethods?.readCommitAuthor() ?: "Unknown"
+        if (groovyMethods) {
+          groovyMethods.notifySlack("", "jobber-jenkins", [
         				[
         					title: "BUILD FAILED: ${service} Service with build number ${env.BUILD_NUMBER}",
         					title_link: "${env.BUILD_URL}",
@@ -175,7 +197,10 @@ pipeline {
         					]
         				]
         		]
-        )
+          )
+        } else {
+          echo "groovyMethods not available, skipping Slack notification"
+        }
       }
     }
   }
